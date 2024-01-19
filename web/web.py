@@ -93,7 +93,7 @@ class WebServer:
                 titles.append(temp_title)
                 types.append(2)
         jsCode = self.make_download_js_from_ids(paper_id, ids, titles, types)
-        return htmlCode
+        return jsCode
 
     def get_citations(self, paper_id, type):
         url = 'https://www.semanticscholar.org/api/1/search/paper/'+ paper_id + '/citations'  # Replace with your actual API endpoint
@@ -138,7 +138,7 @@ class WebServer:
     async def post_semantic_scholar(self, request: web.Request) -> Dict[Any, Any]:
         data = await request.post()
         hash_ids =  data.get('hash_ids')
-        allow_download = request.query.get('allow_download')
+        allow_download = data.get('allow_download')
 
         paper_id = request.query.get('paper_id')
 
@@ -183,7 +183,7 @@ class WebServer:
             if allow_download == "1":
                 download_function += self.make_html_from_citations(paper_id, combined_data)
         
-        htmlCode = "<html><body><div id='demo'>" + json.dumps(combined_data) + "</div></body><script>" + download_function + "</script></html>"
+        htmlCode = "<html><body><div id='demo'>" + json.dumps(data) + "</div></body><script>" + download_function + "</script></html>"
         return web.Response(text=htmlCode, content_type='text/html')
     def get_semantic_scholar(self, request: web.Request):
         with open('semantic-scholar.html', 'r') as file:
