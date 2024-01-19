@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Semantic Scholar</title>
+</head>
+<body>
+    <form action="/semantic_scholar" method="post">
+        <label for="hash_ids">Input artical ids to view citations and references. Every article ids are separated by comma(,)</label><br>
+        <textarea required id="hash_ids"  rows="10" cols="100" name="hash_ids"></textarea><br>
+        <input required type="checkbox" id="allow_download" name="allow_download" value="1">
+        <label for="checkbox">Allow Download</label><br>
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>

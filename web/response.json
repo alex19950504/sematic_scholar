@@ -1,0 +1,18 @@
+{
+  "routes": [
+    {
+      "name": "semantic_scholar",
+      "params": [
+        "paper_id", "allow_download"
+      ],
+      "example": "/semantic_scholar?paper_id=28fa72056656c2f9234c213b80c596d08860ee5a&allow_download=0"
+    },
+    {
+      "name": "code-book",
+      "params": [
+        "hash"
+      ],
+      "example": "/code-book?hash=1AB9BCD5C25850ABD12D4493E7C0755F"
+    }
+  ]
+}
