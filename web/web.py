@@ -81,13 +81,13 @@ class WebServer:
         references = citations_data['references']['data']
        
         for item in citations:
-            if(item["has_pdf"] and itemp["id"] not in ids):
+            if(item["has_pdf"] and item["id"] not in ids):
                 ids.append(item["id"])
                 temp_title = item["title"].replace("'", "")
                 titles.append(temp_title)
                 types.append(1)
         for item in references:
-            if(item["has_pdf"] and itemp["id"] not in ids):
+            if(item["has_pdf"] and item["id"] not in ids):
                 ids.append(item["id"])
                 temp_title = item["title"].replace("'", "")
                 titles.append(temp_title)
