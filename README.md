@@ -14,8 +14,8 @@ This is container uses `python`, `poetry`, `aiohttp` and `docker` to create web 
 
 ## examples
 
-## docker build -f .\Dockerfile -t sematic_scholar .
-## docker run -d -p 8080:8888 -e HOST=0.0.0.0 -e PORT=8888 sematic_scholar
+## docker build -f Dockerfile -t sematic_scholar .
+## docker run -d -p 80:80 -e HOST=0.0.0.0 -e PORT=80 sematic_scholar
 
 ### Run docker container on local port 1234
  ```bash
