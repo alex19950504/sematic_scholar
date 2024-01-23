@@ -60,7 +60,7 @@ class WebServer:
                 subdir = "citaions"
             elif type == 2:
                 subdir = "references"
-            download_call = f"downloadPdf('{pdfUrl}', '{dir}/{subdir}/{titles[index]}');  "
+            download_call = f"downloadPdf('{pdfUrl}', '{titles[index]}');  "
             print(download_call)
             download_calls.append(download_call)
 
@@ -81,13 +81,13 @@ class WebServer:
         references = citations_data['references']['data']
        
         for item in citations:
-            if(item["has_pdf"]):
+            if(item["has_pdf"] and itemp["id"] not in ids):
                 ids.append(item["id"])
                 temp_title = item["title"].replace("'", "")
                 titles.append(temp_title)
                 types.append(1)
         for item in references:
-            if(item["has_pdf"]):
+            if(item["has_pdf"] and itemp["id"] not in ids):
                 ids.append(item["id"])
                 temp_title = item["title"].replace("'", "")
                 titles.append(temp_title)
