@@ -198,40 +198,44 @@ class WebServer:
     async def post_download_by_hash(self, request: web.Request):
         
         data = await request.post()
-        hash_value =  data.get('hash_id')
+        hash_values =  data.get('hash_id')
 
-        if hash_value is None:
+        if hash_values is None:
             return web.Response(text="missing hash!")
         else:
-            hash_url = f"https://library.lol/main/{hash_value}"
-            response = requests.get(hash_url)
-            files = response.text
-            match = re.search(r'<a href="(https://cloudflare.*?)">Cloudflare', files)
+            download_code = ""
+            download_js = """
+            async function downloadPdf(url, title) {
+                try {
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    const filename = title + ".pdf";
+                    const link = document.createElement("a");
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (error) {
+                    console.error("Error downloading PDF:", error);
+                }
+                }
+            """
+            content = ""
+            for hash_value in hash_values.split(','):
+                hash_url = f"https://library.lol/main/{hash_value}"
+                response = requests.get(hash_url)
+                files = response.text
+                match = re.search(r'<a href="(https://cloudflare.*?)">Cloudflare', files)
+                if match:
+                    url = match.group(1)
+                    # return web.Response(text=url)
+                    download_code += f"downloadPdf('{url}', '{hash_value}');  "
+                    content += (hash_value + ":" + url + "<br/>")
+                else:
+                    content += (hash_value + ":" + "Wrong hash<br/>")
+            return web.Response(text="<html><body>" + content + "</body><script>" + download_js + download_code  + "</script></html>", content_type='text/html')
             
-            if match:
-                url = match.group(1)
-                # return web.Response(text=url)
-                download_js = """
-                 async function downloadPdf(url, title) {
-                    try {
-                        const response = await fetch(url);
-                        const blob = await response.blob();
-                        const filename = title + ".pdf";
-                        const link = document.createElement("a");
-                        link.href = window.URL.createObjectURL(blob);
-                        link.download = filename;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    } catch (error) {
-                        console.error("Error downloading PDF:", error);
-                    }
-                    }
-                """
-                download_code = f"downloadPdf('{url}', '{hash_value}');  "
-                return web.Response(text="<html><body>pdf file will be downloaded soon....</body><script>" + download_js + download_code  + "</script></html>", content_type='text/html')
-            else:
-                return web.Response(text="wrong hash!")
 
     def _add_routes(self) -> None:
         self._web_app.router.add_route("GET", "/", self._get_json)
