@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book</title>
+</head>
+<body>
+    <h2>Book</h2>
+    <textarea id="inputText" rows="4" cols="50"></textarea><br>
+    <button onclick="sendRequest()">Submit</button>
+    <div id="output"></div>
+
+    <script>
+        function sendRequest() {
+            var input = document.getElementById('inputText').value;
+            var inputArray = input.split(',');
+
+            inputArray.forEach(function(hashId) {
+                // Send GET request to your API
+                fetch('http://localhost:8080/book?hash_id=' + hashId)
+                .then(response => response.json())
+                .then(data => {
+                    var outputDiv = document.getElementById('output');
+                    var resultDiv = document.createElement('div');
+
+                    var resultUrl = data.url; // Assuming the API returns a URL
+                    var resultLink = document.createElement('a');
+                    resultLink.href = resultUrl;
+                    resultLink.innerText = 'Download Result';
+
+                    resultDiv.innerHTML = '<p>' + data.result + '</p>';
+                    resultDiv.appendChild(resultLink);
+
+                    outputDiv.appendChild(resultDiv);
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        }
+    </script>
+</body>
+</html>

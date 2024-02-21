@@ -1,13 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Download by hash value</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book</title>
+
+    <style>
+        p {
+            margin: 0 !important;
+        }
+    </style>
 </head>
 <body>
-    <form action="/code-book" method="post">
-        <label for="hash_id">Input Hash Value to Download</label><br>
-        <textarea required id="hash_id"  rows="10" cols="100" name="hash_id"></textarea><br>
-        <input type="submit" value="Submit">
-    </form>
+    <h2>Book</h2>
+    <textarea id="inputText" rows="4" cols="50"></textarea><br>
+    <button onclick="sendRequest()">Submit</button>
+    <div id="output-count"></div>
+    <div id="output"></div>
+    
+    <script>
+        async function download(url, fileName) {
+            // var link = document.createElement('a');
+            // link.href = url;
+            // link.download = fileName; // Optionally set the file name for the downloaded file
+
+            // document.body.appendChild(link);
+            // link.click();
+
+            // document.body.removeChild(link);
+
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const filename = fileName;
+                const link = document.createElement("a");
+                link.href = window.URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                return true;
+            } catch (error) {
+                console.error("Error downloading PDF:", error);
+                return false;
+            }
+        }
+
+        async function sendRequest() {
+            var input = document.getElementById('inputText').value;
+            var inputArray = input.split(',');
+            var outputCountDiv = document.getElementById('output-count');
+            var outputDiv = document.getElementById('output');
+
+            // Initialize UI
+            outputDiv.innerHTML = "";
+            outputCountDiv.innerHTML = "";
+
+            outputCountDiv.innerHTML = '<h2>Total Hash Count: ' + inputArray.length + '</h2>';
+            for(var index = 0; index < inputArray.length; index++) {
+                var hashId = inputArray[index];
+                
+                var resultDiv = document.createElement('div');
+
+                resultDiv.innerHTML = '<p> Getting download url for the <strong>' + (index + 1) + "</strong>th hash value of <strong>" + inputArray.length + '</strong></p>';
+                outputDiv.appendChild(resultDiv);
+                var data = await await fetch('/book?hash_id=' + hashId)
+                .then(response => response.json())
+                .then(data => {
+                    return data;
+                })
+                .catch(error => console.error('Error:', error));
+                
+                var status = data.status;
+                var resultLink = document.createElement('a');
+                if(status === 1) {
+                    var resultUrl = data.url; // Assuming the API returns a URL
+                    resultLink.href = resultUrl;
+                    
+                    // Extract File Name
+                    var parsedUrl = new URL(resultUrl);
+                    // Get filename parameter from query string
+                    var filename = parsedUrl.searchParams.get('filename');
+                    // Clean filename (remove special characters for URL encoding)
+                    // var cleanedFilename = filename.replace(/[^a-zA-Z0-9]+/g, '_');
+                    resultLink.innerText = filename;
+                    console.error(filename)
+                    resultDiv.innerHTML = "Downloading....";
+                    const result = await download(resultUrl, filename);
+                } else {
+                    resultLink.innerText = "ERROR: " + data.message;
+                }
+                resultDiv.innerHTML = '<p> Finished to process the <strong>' + (index + 1) + "</strong>th hash value of <strong>" + inputArray.length + '</strong></p>';
+                resultDiv.appendChild(resultLink);
+            }
+
+            var finishedDiv = document.createElement('div');
+            finishedDiv.innerHTML = "Finished!!! :)"
+            outputDiv.appendChild(finishedDiv)
+        }
+    </script>
 </body>
 </html>

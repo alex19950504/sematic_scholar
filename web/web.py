@@ -197,52 +197,28 @@ class WebServer:
     
     async def post_download_by_hash(self, request: web.Request):
         
-        data = await request.post()
-        hash_values =  data.get('hash_id')
+        hash_value = request.query.get("hash_id")
 
-        if hash_values is None:
-            return web.Response(text="missing hash!")
+        if hash_value is None:
+            return web.json_response({ "status":  0, "message": "Missing hash_id"})
         else:
-            download_code = ""
-            download_js = """
-            async function downloadPdf(url, title) {
-                try {
-                    const response = await fetch(url);
-                    const blob = await response.blob();
-                    const filename = title + ".pdf";
-                    const link = document.createElement("a");
-                    link.href = window.URL.createObjectURL(blob);
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                } catch (error) {
-                    console.error("Error downloading PDF:", error);
-                }
-                }
-            """
-            content = ""
-            for hash_value in hash_values.split(','):
-                hash_url = f"https://library.lol/main/{hash_value}"
-                response = requests.get(hash_url)
-                files = response.text
-                match = re.search(r'<a href="(https://cloudflare.*?)">Cloudflare', files)
-                if match:
-                    url = match.group(1)
-                    # return web.Response(text=url)
-                    download_code += f"downloadPdf('{url}', '{hash_value}');  "
-                    content += (hash_value + ":" + url + "<br/>")
-                else:
-                    content += (hash_value + ":" + "Wrong hash<br/>")
-            return web.Response(text="<html><body>" + content + "</body><script>" + download_js + download_code  + "</script></html>", content_type='text/html')
+            hash_url = f"https://library.lol/main/{hash_value}"
+            response = requests.get(hash_url)
+            files = response.text
+            match = re.search(r'<a href="(https://cloudflare.*?)">Cloudflare', files)
             
-
+            if match:
+                url = match.group(1)
+                return web.json_response({ "status": 1, "url": url })
+            else:
+                return web.json_response({ "status":  0, "message": "Wrong hash"})
+            
     def _add_routes(self) -> None:
         self._web_app.router.add_route("GET", "/", self._get_json)
         self._web_app.router.add_route("GET", "/semantic_scholar", self.get_semantic_scholar)
         self._web_app.router.add_route("POST", "/semantic_scholar", self.post_semantic_scholar)
         self._web_app.router.add_route("GET", "/code-book", self.get_download_by_hash)
-        self._web_app.router.add_route("POST", "/code-book", self.post_download_by_hash)
+        self._web_app.router.add_route("GET", "/book", self.post_download_by_hash)
         self._web_app.router.add_route("HEAD", "/{tail:.*}", self._get_json)
 
     async def start_web_server(self) -> None:
