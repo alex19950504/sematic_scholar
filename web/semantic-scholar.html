@@ -104,7 +104,7 @@
 
                 var resultDiv = document.createElement('div');
 
-                resultDiv.innerHTML = '<p class="secondary"> Getting paper information and download urls for the <strong>' + (index + 1) + "</strong>th paper of <strong>" + inputArray.length + '</strong></p>';
+                resultDiv.innerHTML = '<p class="secondary"> Getting paper information for the <strong>' + (index + 1) + "</strong>th paper of <strong>" + inputArray.length + '</strong></p>';
                 outputDiv.appendChild(resultDiv);
                 var data = await await fetch('/scholar?hash_ids=' + hashId)
                     .then(response => response.json())
