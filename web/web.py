@@ -38,44 +38,30 @@ class WebServer:
        async with aiofiles.open(file_path.resolve(), mode="r") as f:
             return json.loads(await f.read())
 
-    def get_pdf_url(self, paper_id):
-        url = 'https://www.semanticscholar.org/api/1/paper/'+ paper_id + '/pdf-data'  # Replace with your actual API endpoint
-        response = requests.get(url)
-        python_object = response.json()
-        return python_object['pdfUrl']
-    
+    def get_pdf_url(self, request: web.Request):
+        paper_id = request.query.get('paper_id')
+
+        try:
+            url = 'https://www.semanticscholar.org/api/1/paper/'+ paper_id + '/pdf-data'  # Replace with your actual API endpoint
+            response = requests.get(url)
+            python_object = response.json()
+            return web.json_response({ "status": 1, "url": python_object['pdfUrl'] })
+        except:
+            return web.json_response({ "status": 0, "message": "Cannot find pdf link" })
+
     def make_download_js_from_ids(self, paper_id, ids, titles, types):
         pdfUrls = []
         print(paper_id, ids, titles, types)
         dir = paper_id
         for idx, id in enumerate(ids):
             temp_url = self.get_pdf_url(id)
-            print("Adding pdfUrl...")
-            pdfUrls.append(temp_url)
+            if temp_url:
+                print("Adding pdfUrl...")
+                pdfUrls.append(temp_url)
         print(pdfUrls)
         #  Function to download the PDF file
         
-        download_calls = []
-
-        # Iterate over the pdfUrls list and format the downloadPdf function calls
-        for index, pdfUrl in enumerate(pdfUrls):
-            type = types[index]
-            subdir = ""
-            if type == 1:
-                subdir = "citaions"
-            elif type == 2:
-                subdir = "references"
-            download_call = f"downloadPdf('{pdfUrl}', '{titles[index]}');  "
-            print(download_call)
-            download_calls.append(download_call)
-
-        # Join the formatted downloadPdf function calls with a newline character
-        concatenated_code = "\n".join(download_calls)
-        
-        final_code = concatenated_code
-        # print("-----------final code--------")
-        # print(final_code)
-        return final_code
+        return pdfUrls
         
     def make_html_from_citations(self, paper_id, citations_data):
         ids = []
@@ -97,9 +83,11 @@ class WebServer:
                 temp_title = item["title"].replace("'", "")
                 titles.append(temp_title)
                 types.append(2)
-        jsCode = self.make_download_js_from_ids(paper_id, ids, titles, types)
-        return jsCode
 
+        return ids
+        # jsCode = self.make_download_js_from_ids(paper_id, ids, titles, types)
+        # return jsCode
+    
     def get_citations(self, paper_id, type):
         url = 'https://www.semanticscholar.org/api/1/search/paper/'+ paper_id + '/citations'  # Replace with your actual API endpoint
         # print(url)
@@ -123,13 +111,35 @@ class WebServer:
         citations = []
         citations_count = 0
         num_each_citations = len(python_object['results'])
-        print(python_object['results'])
         for count in range(num_each_citations):
+            details = python_object['results'][count]
+            print(details)
+            authors = []
+            year = 0
+            try:
+                print(details['authors'])
+                for author in details['authors']:
+                    authors.append(author[0]['name'])
+            except:
+                authors = []
+            
+            try:
+                print(details['year'])
+                year = details['year']
+            except:
+                year = 0
+
             temp_data = { 
-                "title": python_object['results'][count]['title']['text'],
-                "id" : python_object['results'][count]['id'],
-                # "authors" : python_object['results'][count]['authors'],
-                # "year" : python_object['results'][count]['year'],
+                "id" : details['id'],
+                "corpusId": details['corpusId'],
+                "title": details['title']['text'],
+                "slug": details['slug'],
+                "venue": details['venue']['text'],
+                "year": year,
+                "authors": authors,
+                "numCiting": details['numCiting'],
+                "numCitedBy": details['numCitedBy'],
+                "fieldsOfStudy": details['fieldsOfStudy'],
                 "url" : "https://www.semanticscholar.org/paper/" + python_object['results'][count]['slug'] + "/" + python_object['results'][count]['id'],
                 "has_pdf": python_object['results'][count]['isPdfVisible'],
                 "pdf_url": "https://www.semanticscholar.org/reader/" + python_object['results'][count]['id']
@@ -140,35 +150,11 @@ class WebServer:
         citations_count = citations_count + 1
         return citations
 
-    async def post_semantic_scholar(self, request: web.Request) -> Dict[Any, Any]:
-        data = await request.post()
-        hash_ids =  data.get('hash_ids')
-        allow_download = data.get('allow_download')
-
-        paper_id = request.query.get('paper_id')
+    async def post_semantic_scholar(self, request: web.Request):
+        hash_ids = request.query.get("hash_ids")
 
         data = {}
         
-        download_function = """
-            async function downloadPdf(url, title) {
-            try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const filename = title + ".pdf";
-                const link = document.createElement("a");
-                link.href = window.URL.createObjectURL(blob);
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (error) {
-                console.error("Error downloading PDF:", error);
-            }
-            }
-
-            // Call the downloadPdf function with the PDF file URL
-        """
-
         for paper_id in hash_ids.split(','):
             citations_data = self.get_citations(paper_id, "citations")
             reference_data = self.get_citations(paper_id, "references")
@@ -185,11 +171,8 @@ class WebServer:
 
             data[paper_id] = combined_data
 
-            if allow_download == "1":
-                download_function += self.make_html_from_citations(paper_id, combined_data)
-        
-        htmlCode = "<html><body><div id='demo'>" + json.dumps(data) + "</div></body><script>" + download_function + "</script></html>"
-        return web.Response(text=htmlCode, content_type='text/html')
+            paper_ids_with_pdf = self.make_html_from_citations(paper_id, combined_data)
+        return web.json_response({ "data": combined_data, "paper_ids_with_pdf":  paper_ids_with_pdf, "status": 1})
     def get_semantic_scholar(self, request: web.Request):
         with open('semantic-scholar.html', 'r') as file:
             html_content = file.read()
@@ -221,9 +204,10 @@ class WebServer:
     def _add_routes(self) -> None:
         self._web_app.router.add_route("GET", "/", self._get_json)
         self._web_app.router.add_route("GET", "/semantic_scholar", self.get_semantic_scholar)
-        self._web_app.router.add_route("POST", "/semantic_scholar", self.post_semantic_scholar)
+        self._web_app.router.add_route("GET", "/scholar", self.post_semantic_scholar)
         self._web_app.router.add_route("GET", "/code-book", self.get_download_by_hash)
         self._web_app.router.add_route("GET", "/book", self.post_download_by_hash)
+        self._web_app.router.add_route("GET", "/paper_link", self.get_pdf_url)
         self._web_app.router.add_route("HEAD", "/{tail:.*}", self._get_json)
 
     async def start_web_server(self) -> None:

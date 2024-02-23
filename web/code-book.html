@@ -93,9 +93,7 @@
                 var hashId = inputArray[index];
 
                 var resultDiv = document.createElement('div');
-
-
-
+                
                 resultDiv.innerHTML = '<p> Getting download url for the <strong>' + (index + 1) + "</strong>th hash value of <strong>" + inputArray.length + '</strong></p>';
                 outputDiv.appendChild(resultDiv);
                 var data = await await fetch('/book?hash_id=' + hashId)
