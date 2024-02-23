@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,15 +12,37 @@
         }
     </style>
 </head>
+
 <body>
     <h2>Book</h2>
     <textarea id="inputText" rows="4" cols="50"></textarea><br>
     <button onclick="sendRequest()">Submit</button>
     <div id="output-count"></div>
     <div id="output"></div>
-    
+
     <script>
-        async function download(url, fileName) {
+
+        function downloadTxtFile(text, filename) {
+            // Create a Blob containing the text
+            const blob = new Blob([text], { type: 'text/plain' });
+
+            // Create a temporary anchor element
+            const anchor = document.createElement('a');
+            anchor.href = URL.createObjectURL(blob);
+            anchor.download = filename;
+
+            // Append the anchor to the body
+            document.body.appendChild(anchor);
+
+            // Trigger the click event on the anchor
+            anchor.click();
+
+            // Cleanup
+            document.body.removeChild(anchor);
+            URL.revokeObjectURL(anchor.href);
+        }
+
+        async function download(url, filename) {
             // var link = document.createElement('a');
             // link.href = url;
             // link.download = fileName; // Optionally set the file name for the downloaded file
@@ -32,15 +55,20 @@
             try {
                 const response = await fetch(url);
                 const blob = await response.blob();
-                const filename = fileName;
-                const link = document.createElement("a");
-                // Set the crossorigin attribute to "anonymous" to allow insecure downloads
-                link.setAttribute('crossorigin', 'anonymous');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                 // Create a temporary anchor element
+                const anchor = document.createElement('a');
+                anchor.href = URL.createObjectURL(blob);
+                anchor.download = filename;
+
+                // Append the anchor to the body
+                document.body.appendChild(anchor);
+                
+                // Trigger the click event on the anchor
+                anchor.click();
+
+                // Cleanup
+                document.body.removeChild(anchor);
+                URL.revokeObjectURL(anchor.href);
                 return true;
             } catch (error) {
                 console.error("Error downloading PDF:", error);
@@ -54,31 +82,35 @@
             var outputCountDiv = document.getElementById('output-count');
             var outputDiv = document.getElementById('output');
 
+            var urls = "";
+
             // Initialize UI
             outputDiv.innerHTML = "";
             outputCountDiv.innerHTML = "";
 
             outputCountDiv.innerHTML = '<h2>Total Hash Count: ' + inputArray.length + '</h2>';
-            for(var index = 0; index < inputArray.length; index++) {
+            for (var index = 0; index < inputArray.length; index++) {
                 var hashId = inputArray[index];
-                
+
                 var resultDiv = document.createElement('div');
+
+
 
                 resultDiv.innerHTML = '<p> Getting download url for the <strong>' + (index + 1) + "</strong>th hash value of <strong>" + inputArray.length + '</strong></p>';
                 outputDiv.appendChild(resultDiv);
                 var data = await await fetch('/book?hash_id=' + hashId)
-                .then(response => response.json())
-                .then(data => {
-                    return data;
-                })
-                .catch(error => console.error('Error:', error));
-                
+                    .then(response => response.json())
+                    .then(data => {
+                        return data;
+                    })
+                    .catch(error => console.error('Error:', error));
+
                 var status = data.status;
                 var resultLink = document.createElement('a');
-                if(status === 1) {
+                if (status === 1) {
                     var resultUrl = data.url; // Assuming the API returns a URL
                     resultLink.href = resultUrl;
-                    
+
                     // Extract File Name
                     var parsedUrl = new URL(resultUrl);
                     // Get filename parameter from query string
@@ -88,18 +120,29 @@
                     resultLink.innerText = filename;
                     console.error(filename)
                     resultDiv.innerHTML = "Downloading....";
-                    const result = await download(resultUrl, filename);
+                    if (urls == '') 
+                        urls = resultLink
+                    else
+                        urls = urls + "\r\n" + resultLink;
+                    // const result = await download(resultUrl, filename);
                 } else {
                     resultLink.innerText = "ERROR: " + data.message;
                 }
                 resultDiv.innerHTML = '<p> Finished to process the <strong>' + (index + 1) + "</strong>th hash value of <strong>" + inputArray.length + '</strong></p>';
                 resultDiv.appendChild(resultLink);
+
+                window.scrollTo(0, document.body.scrollHeight);
+
             }
 
             var finishedDiv = document.createElement('div');
             finishedDiv.innerHTML = "Finished!!! :)"
+
+            downloadTxtFile(urls, 'code-book-download-urls.txt');
+
             outputDiv.appendChild(finishedDiv)
         }
     </script>
 </body>
+
 </html>

@@ -12,10 +12,15 @@ import json
 import numpy as np
 import aiohttp
 import re
+import ssl
 logger = logging.getLogger(__name__)
 
 
 class WebServer:
+
+    ssl_certfile = 'server.crt'
+    ssl_keyfile = 'server.key'
+
     def __init__(
         self,
         host: str,
@@ -224,6 +229,11 @@ class WebServer:
     async def start_web_server(self) -> None:
         self._add_routes()
         await self._runner.setup()
+         # Create an SSL context
+        # ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        # ssl_context.load_cert_chain(self.ssl_certfile, self.ssl_keyfile)
+
+        # site = web.TCPSite(self._runner, self._host, self._port, ssl_context=ssl_context)
         site = web.TCPSite(self._runner, self._host, self._port)
         self._response_json = await self.get_json_response()
         await site.start()
