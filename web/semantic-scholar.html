@@ -171,6 +171,12 @@
                     downloadUrls.push(resultUrl)
                 } else {
                     resultLink.innerText = "ERROR: " + data.message;
+                    var waitingDiv = document.createElement('div');
+                    waitingDiv.innerHTML = '<p class="secondary"> Waiting for 80 seconds to avoid network traffic issue</p>';
+                    outputDiv.appendChild(waitingDiv);
+                    await wait(800000);
+                    window.scrollTo(0, document.body.scrollHeight);
+                    index = index - 1;
                 }
                 resultDiv.innerHTML = '<p class="secondary"> Finished to process the <strong>' + (index + 1) + "</strong>th paper of <strong>" + urls.length + '</strong></p>';
                 resultDiv.appendChild(resultLink);

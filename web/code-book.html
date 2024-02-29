@@ -120,12 +120,19 @@
                     // const result = await download(resultUrl, filename);
                 } else {
                     resultLink.innerText = "ERROR: " + data.message;
+                    var waitingDiv = document.createElement('div');
+                    waitingDiv.innerHTML = '<p class="secondary"> Waiting for 800 seconds to avoid network traffic issue</p>';
+                    outputDiv.appendChild(waitingDiv);
+                    await wait(8000000);
+                    window.scrollTo(0, document.body.scrollHeight);
+                    index = index - 1;
                 }
+
                 resultDiv.innerHTML = '<p> Finished to process the <strong>' + (index + 1) + "</strong>th hash value of <strong>" + inputArray.length + '</strong></p>';
                 resultDiv.appendChild(resultLink);
 
                 window.scrollTo(0, document.body.scrollHeight);
-                await wait(10000);
+                
             }
 
             var finishedDiv = document.createElement('div');
