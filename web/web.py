@@ -151,28 +151,32 @@ class WebServer:
         return citations
 
     async def post_semantic_scholar(self, request: web.Request):
-        hash_ids = request.query.get("hash_ids")
+        try:
+            hash_ids = request.query.get("hash_ids")
 
-        data = {}
-        
-        for paper_id in hash_ids.split(','):
-            citations_data = self.get_citations(paper_id, "citations")
-            reference_data = self.get_citations(paper_id, "references")
-            combined_data = {
-                "citations": {
-                    "total": len(citations_data),
-                    "data": citations_data
-                },
-                "references": {
-                    "total": len(reference_data),
-                    "data": reference_data
+            data = {}
+            
+            for paper_id in hash_ids.split(','):
+                citations_data = self.get_citations(paper_id, "citations")
+                reference_data = self.get_citations(paper_id, "references")
+                combined_data = {
+                    "citations": {
+                        "total": len(citations_data),
+                        "data": citations_data
+                    },
+                    "references": {
+                        "total": len(reference_data),
+                        "data": reference_data
+                    }
                 }
-            }
 
-            data[paper_id] = combined_data
+                data[paper_id] = combined_data
 
-            paper_ids_with_pdf = self.make_html_from_citations(paper_id, combined_data)
-        return web.json_response({ "data": combined_data, "paper_ids_with_pdf":  paper_ids_with_pdf, "status": 1})
+                paper_ids_with_pdf = self.make_html_from_citations(paper_id, combined_data)
+            return web.json_response({ "data": combined_data, "paper_ids_with_pdf":  paper_ids_with_pdf, "status": 1})
+        except:
+            return web.json_response({"status": 0})
+            
     def get_semantic_scholar(self, request: web.Request):
         with open('semantic-scholar.html', 'r') as file:
             html_content = file.read()

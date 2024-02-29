@@ -22,6 +22,10 @@
 
     <script>
 
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
         function downloadTxtFile(text, filename) {
             // Create a Blob containing the text
             const blob = new Blob([text], { type: 'text/plain' });
@@ -43,15 +47,6 @@
         }
 
         async function download(url, filename) {
-            // var link = document.createElement('a');
-            // link.href = url;
-            // link.download = fileName; // Optionally set the file name for the downloaded file
-
-            // document.body.appendChild(link);
-            // link.click();
-
-            // document.body.removeChild(link);
-
             try {
                 const response = await fetch(url);
                 const blob = await response.blob();
@@ -93,7 +88,7 @@
                 var hashId = inputArray[index];
 
                 var resultDiv = document.createElement('div');
-                
+
                 resultDiv.innerHTML = '<p> Getting download url for the <strong>' + (index + 1) + "</strong>th hash value of <strong>" + inputArray.length + '</strong></p>';
                 outputDiv.appendChild(resultDiv);
                 var data = await await fetch('/book?hash_id=' + hashId)
@@ -130,7 +125,7 @@
                 resultDiv.appendChild(resultLink);
 
                 window.scrollTo(0, document.body.scrollHeight);
-
+                await wait(10000);
             }
 
             var finishedDiv = document.createElement('div');

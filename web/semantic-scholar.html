@@ -26,6 +26,10 @@
 
     <script>
 
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
         function downloadTxtFile(text, filename) {
             // Create a Blob containing the text
             const blob = new Blob([text], { type: 'text/plain' });
@@ -47,15 +51,6 @@
         }
 
         async function download(url, filename) {
-            // var link = document.createElement('a');
-            // link.href = url;
-            // link.download = fileName; // Optionally set the file name for the downloaded file
-
-            // document.body.appendChild(link);
-            // link.click();
-
-            // document.body.removeChild(link);
-
             try {
                 const response = await fetch(url);
                 const blob = await response.blob();
@@ -123,11 +118,19 @@
                     totalData[hashId] = paperDetails;
                 } else {
                     resultLink.innerText = "ERROR: " + data.message;
+                    var waitingDiv = document.createElement('div');
+                    waitingDiv.innerHTML = '<p class="secondary"> Waiting for 80 seconds to avoid network traffic issue</p>';
+                    outputDiv.appendChild(waitingDiv);
+                    await wait(800000);
+                    window.scrollTo(0, document.body.scrollHeight);
+                    index = index - 1;
+                    continue;
                 }
                 resultDiv.innerHTML = '<p class="secondary"> Finished to process the <strong>' + (index + 1) + "</strong>th paper of <strong>" + inputArray.length + '</strong></p>';
                 resultDiv.appendChild(resultLink);
 
                 window.scrollTo(0, document.body.scrollHeight);
+                // await wait(1000);
             }
 
             var firstStepResultDiv = document.createElement('div');
@@ -173,6 +176,7 @@
                 resultDiv.appendChild(resultLink);
 
                 window.scrollTo(0, document.body.scrollHeight);
+                // await wait(10000);
             }
 
             var finishedDiv = document.createElement('div');
