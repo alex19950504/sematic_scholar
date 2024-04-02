@@ -34,70 +34,23 @@ class WebServer:
        async with aiofiles.open(file_path.resolve(), mode="r") as f:
             return json.loads(await f.read())
 
-    def get_pdf_url(self, paper_id):
-        url = 'https://www.semanticscholar.org/api/1/paper/'+ paper_id + '/pdf-data'  # Replace with your actual API endpoint
-        response = requests.get(url)
-        python_object = response.json()
-        return python_object['pdfUrl']
-    
-    def make_download_js_from_ids(self, paper_id, ids, titles, types):
-        pdfUrls = []
-        print(paper_id, ids, titles, types)
-        dir = paper_id
-        for idx, id in enumerate(ids):
-            temp_url = self.get_pdf_url(id)
-            print("Adding pdfUrl...")
-            pdfUrls.append(temp_url)
-        #  Function to download the PDF file
-        
-        download_calls = []
-
-        # Iterate over the pdfUrls list and format the downloadPdf function calls
-        for index, pdfUrl in enumerate(pdfUrls):
-            type = types[index]
-            subdir = ""
-            if type == 1:
-                subdir = "citaions"
-            elif type == 2:
-                subdir = "references"
-            download_call = f"downloadPdf('{pdfUrl}', '{titles[index]}');  "
-            print(download_call)
-            download_calls.append(download_call)
-
-        # Join the formatted downloadPdf function calls with a newline character
-        concatenated_code = "\n".join(download_calls)
-        
-        final_code = concatenated_code
-        # print("-----------final code--------")
-        # print(final_code)
-        return final_code
-        
-    def make_html_from_citations(self, paper_id, citations_data):
+    def paperIdsWithPdf(self, total_data):
         ids = []
-        titles = []
-        types = []
        
-        citations = citations_data['citations']['data']
-        references = citations_data['references']['data']
+        citations = total_data['citations']['data']
+        references = total_data['references']['data']
        
         for item in citations:
             if(item["has_pdf"] and item["id"] not in ids):
                 ids.append(item["id"])
-                temp_title = item["title"].replace("'", "")
-                titles.append(temp_title)
-                types.append(1)
         for item in references:
             if(item["has_pdf"] and item["id"] not in ids):
                 ids.append(item["id"])
-                temp_title = item["title"].replace("'", "")
-                titles.append(temp_title)
-                types.append(2)
-        jsCode = self.make_download_js_from_ids(paper_id, ids, titles, types)
-        return jsCode
+
+        return ids
 
     def get_citations(self, paper_id, type):
         url = 'https://www.semanticscholar.org/api/1/search/paper/'+ paper_id + '/citations'  # Replace with your actual API endpoint
-        # print(url)
         citationType = "citingPapers" if type == "citations" else "citedPapers"
 
         params = {
@@ -123,7 +76,6 @@ class WebServer:
 
         for count in range(num_each_citations):
             details = python_object['results'][count]
-            print(details)
             authors = []
             year = 0
             try:
@@ -158,56 +110,164 @@ class WebServer:
         citations_count = citations_count + 1
         return citations
 
-    async def post_semantic_scholar(self, request: web.Request) -> Dict[Any, Any]:
-        data = await request.post()
-        hash_ids =  data.get('hash_ids')
-        allow_download = data.get('allow_download')
+    def process_papers(self, paper_ids):
+        
+        start_time = time.time()
 
-        paper_id = request.query.get('paper_id')
+        paper_ids_with_pdf = []
+        
+        total_count = len(paper_ids.split(','))
+        status_data = {
+            "status": "working",
+            "input": "Total " + str(total_count) + " hash IDs",
+            "progress": "",
+            "step": "Gathering Papers' Information",
+            "elapsed": 0
+        }
+        status_data["progress"] = "started to gathering data..."
+        with open('storage/paper/input.txt', 'w+') as input_file:
+            input_file.truncate(0)
+            input_file.write(paper_ids.replace(',', '\r\n'))
 
+        with open('storage/paper/status.txt', 'w+') as file:
+            file.truncate(0)
+            file.write(json.dumps(status_data))
+        
         data = {}
-        
-        download_function = """
-            async function downloadPdf(url, title) {
-            try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                const filename = title + ".pdf";
-                const link = document.createElement("a");
-                link.href = window.URL.createObjectURL(blob);
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            } catch (error) {
-                console.error("Error downloading PDF:", error);
-            }
-            }
+        index = 0
 
-            // Call the downloadPdf function with the PDF file URL
-        """
+        with open('storage/paper/result.txt', 'w+') as result_file:
+            result_file.truncate(0)
 
-        for paper_id in hash_ids.split(','):
-            citations_data = self.get_citations(paper_id, "citations")
-            reference_data = self.get_citations(paper_id, "references")
-            combined_data = {
-                "citations": {
-                    "total": len(citations_data),
-                    "data": citations_data
-                },
-                "references": {
-                    "total": len(reference_data),
-                    "data": reference_data
+        with open('storage/paper/urls.txt', 'w+') as result_file:
+            result_file.truncate(0)
+
+        for paper_id in paper_ids.split(','):
+            index += 1
+            status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
+            status_data['status'] = 'working'
+            status_data["progress"] = "Processing the " + str(index) + "th paper of " + str(total_count)
+            
+            with open('storage/paper/status.txt', 'w+') as file:
+                file.truncate(0)
+                file.write(json.dumps(status_data))
+            
+            try:
+                citations_data = self.get_citations(paper_id, "citations")
+                reference_data = self.get_citations(paper_id, "references")
+                combined_data = {
+                    "citations": {
+                        "total": len(citations_data),
+                        "data": citations_data
+                    },
+                    "references": {
+                        "total": len(reference_data),
+                        "data": reference_data
+                    }
                 }
-            }
+                
+                data[paper_id] = combined_data
+                paper_ids_with_pdf += self.paperIdsWithPdf(combined_data)
 
-            data[paper_id] = combined_data
+            except requests.exceptions.Timeout:
+                # content += (str(index) + "." + paper_id + ":" + "Timeout error\r\n")
+                
+                status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
+                status_data["status"] = "sleeping"
+                status_data["progress"] = "Sleeping for 1.5 mins because timeout error occurs for the " + str(index) + 'th paper of ' + str(total_count)
+                with open('storage/paper/status.txt', 'w+') as file:
+                    file.truncate(0)
+                    file.write(json.dumps(status_data))
 
-            if allow_download == "1":
-                download_function += self.make_html_from_citations(paper_id, combined_data)
+                time.sleep(90)
+            
+            except requests.exceptions.RequestException as e:
+                # content += (hash_value + ":" + "Network Error\r\n")
+                continue
+
+             # Write result to file 
+            with open('storage/paper/result.txt', 'w+') as result_file:
+                result_file.truncate(0)
+                result_file.write(json.dumps(data))
         
-        htmlCode = "<html><body><div id='demo'>" + json.dumps(data) + "</div></body><script>" + download_function + "</script></html>"
-        return web.Response(text=htmlCode, content_type='text/html')
+        ################# Step 2: Getting pdf urls ####################
+        status_data["step"] = "Getting pdf urls"
+        
+        #Get unique Paper Ids with PDF File
+        paper_ids_with_pdf = list(set(paper_ids_with_pdf))
+        
+        index = 0
+        total_count = len(paper_ids_with_pdf)
+        
+        urls = ""    
+
+        for id in paper_ids_with_pdf:
+            index += 1
+            status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
+            status_data['status'] = 'working'
+            status_data["progress"] = "Getting url of the " + str(index) + "th paper of " + str(total_count)
+            with open('storage/paper/status.txt', 'w+') as file:
+                file.truncate(0)
+                file.write(json.dumps(status_data))
+
+            try:
+                url = 'https://www.semanticscholar.org/api/1/paper/'+ id + '/pdf-data'  # Replace with your actual API endpoint
+                response = requests.get(url, timeout=(5, 10))
+                python_object = response.json()
+                urls += (id + ": " + python_object['pdfUrl'] + "\r\n")
+
+            except requests.exceptions.Timeout:
+                status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
+                status_data["status"] = "sleeping"
+                status_data["progress"] = "Sleeping for 1.5 mins because timeout error occurs for the " + str(index) + 'th paper of ' + str(total_count)
+                with open('storage/paper/status.txt', 'w+') as file:
+                    file.truncate(0)
+                    file.write(json.dumps(status_data))
+
+                time.sleep(90)
+                index -= 1
+                continue
+            
+            except requests.exceptions.RequestException as e:
+                urls += (id + ":" + "Network Error\r\n")
+                continue
+            
+            except:
+                urls += (id + ":" + "No Url\r\n")
+
+            with open('storage/paper/urls.txt', 'w+') as urls_file:
+                urls_file.truncate(0)
+                urls_file.write(urls)
+
+        status_data["status"] = "finished"
+        status_data["progress"] = "finished"
+        status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
+        
+        with open('storage/paper/status.txt', 'w+') as file:
+            file.truncate(0)
+            file.write(json.dumps(status_data))
+
+
+    async def post_semantic_scholar(self, request: web.Request):
+        data = await request.post()
+        paper_ids =  data.get('hash_ids')
+        with open('storage/paper/status.txt', 'r') as file:
+            status_content = file.read()
+            status_data = json.loads(status_content)
+            if(status_data["status"] == "working"):
+                return web.json_response({ "status": 0, "message": "cannot run this action because server is busy" })
+            
+        thread = threading.Thread(target=self.process_papers, name="paper-thread", args=(paper_ids, ))
+        thread.start()
+        
+        total_count = len(paper_ids.split(','))
+        return web.json_response({
+            "status": "working",
+            "input": "Total " + str(total_count) + " paper IDs",
+            "progress": "processing 1th paper",
+            "elapsed": 0,
+        })
+   
     def get_semantic_scholar(self, request: web.Request):
         with open('semantic-scholar.html', 'r') as file:
             html_content = file.read()
@@ -225,7 +285,7 @@ class WebServer:
         return web.json_response(status)
     
     def get_sematic_scholar_status(self, request: web.Request):
-        with open('storage/paper/status.json', 'r') as file:
+        with open('storage/paper/status.txt', 'r') as file:
             status_content = file.read()
             status = json.loads(status_content)
         return web.json_response(status)
@@ -275,6 +335,87 @@ class WebServer:
             
             # Set the Content-Disposition header to force the browser to download the file
             response.headers['Content-Disposition'] = f'attachment; filename="gold-book-input-hash-values.txt"'
+            
+            return response
+        
+        except FileNotFoundError:
+            return web.Response(text='File not found', status=404)
+        
+        except Exception as e:
+            return web.Response(text=f'Error while reading the file: {e}', status=500)
+
+    async def download_paper_result_file(self, request: web.Request):
+        # Path to the file to be downloaded
+        file_path = 'storage/paper/result.txt'
+        
+        try:
+            # Open the file for reading
+            with open(file_path, 'rb') as file:
+                # Read the file contents
+                file_data = file.read()
+            
+            # Create an HTTP response with the file as the body
+            response = web.Response(body=file_data)
+            
+            # Set the content type header
+            response.headers['Content-Type'] = 'application/octet-stream'
+            
+            # Set the Content-Disposition header to force the browser to download the file
+            response.headers['Content-Disposition'] = f'attachment; filename="paper-informations.json"'
+            
+            return response
+        
+        except FileNotFoundError:
+            return web.Response(text='File not found', status=404)
+        
+        except Exception as e:
+            return web.Response(text=f'Error while reading the file: {e}', status=500)
+
+    async def download_paper_result_urls(self, request: web.Request):
+        # Path to the file to be downloaded
+        file_path = 'storage/paper/urls.txt'
+        
+        try:
+            # Open the file for reading
+            with open(file_path, 'rb') as file:
+                # Read the file contents
+                file_data = file.read()
+            
+            # Create an HTTP response with the file as the body
+            response = web.Response(body=file_data)
+            
+            # Set the content type header
+            response.headers['Content-Type'] = 'application/octet-stream'
+            
+            # Set the Content-Disposition header to force the browser to download the file
+            response.headers['Content-Disposition'] = f'attachment; filename="paper-urls.txt"'
+            
+            return response
+        
+        except FileNotFoundError:
+            return web.Response(text='File not found', status=404)
+        
+        except Exception as e:
+            return web.Response(text=f'Error while reading the file: {e}', status=500)
+
+    async def download_paper_input_file(self, request: web.Request):
+        # Path to the file to be downloaded
+        file_path = 'storage/paper/input.txt'
+        
+        try:
+            # Open the file for reading
+            with open(file_path, 'rb') as file:
+                # Read the file contents
+                file_data = file.read()
+            
+            # Create an HTTP response with the file as the body
+            response = web.Response(body=file_data)
+            
+            # Set the content type header
+            response.headers['Content-Type'] = 'application/octet-stream'
+            
+            # Set the Content-Disposition header to force the browser to download the file
+            response.headers['Content-Disposition'] = f'attachment; filename="paper-input-ids.txt"'
             
             return response
         
@@ -388,21 +529,25 @@ class WebServer:
             return web.json_response({
                 "status": "working",
                 "input": "Total " + str(total_count) + " hash IDs",
-                "progress": "processing 1th value"
+                "progress": "processing 1th value",
+                "elapsed": 0,
             })
             
     def _add_routes(self) -> None:
         self._web_app.router.add_route("GET", "/", self._get_json)
         self._web_app.router.add_route("GET", "/semantic_scholar", self.get_semantic_scholar)
         self._web_app.router.add_route("POST", "/semantic_scholar", self.post_semantic_scholar)
+        self._web_app.router.add_route("GET", "/semantic_scholar/status", self.get_sematic_scholar_status)
+        self._web_app.router.add_route("GET", "/paper/download-result", self.download_paper_result_file)
+        self._web_app.router.add_route("GET", "/paper/download-urls", self.download_paper_result_urls)
+        self._web_app.router.add_route("GET", "/paper/download-input", self.download_paper_input_file)
+       
         self._web_app.router.add_route("GET", "/code-book", self.get_download_by_hash)
         self._web_app.router.add_route("POST", "/code-book", self.post_download_by_hash)
-
         self._web_app.router.add_route("GET", "/code-book/status", self.get_code_book_status)
         self._web_app.router.add_route("GET", "/code-book/download-result", self.download_book_result_file)
         self._web_app.router.add_route("GET", "/code-book/download-input", self.download_book_input_file)
 
-        self._web_app.router.add_route("GET", "/semantic_scholar/status", self.get_sematic_scholar_status)
 
         self._web_app.router.add_route("HEAD", "/{tail:.*}", self._get_json)
         
