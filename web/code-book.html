@@ -1,13 +1,175 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Download by hash value</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get book urls by hash Ids</title>
 </head>
+
 <body>
-    <form action="/code-book" method="post">
-        <label for="hash_id">Input Hash Value to Download</label><br>
-        <textarea required id="hash_id"  rows="10" cols="100" name="hash_id"></textarea><br>
-        <input type="submit" value="Submit">
-    </form>
+
+    <h1>Get book urls by hash Ids</h1>
+
+    <div id="part2" style="display:none;">
+        <form id="myForm" onsubmit="return submitForm();">
+            <label for="hash_id">Input Hash Value to Download</label><br>
+            <textarea required id="hash_id" rows="10" required cols="100" name="hash_id"></textarea><br>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+
+    <div id="part1" style="display:none;">
+        <h2>Status: <span id="statusValue"></span></h2>
+        <p>Input: <span id="inputValue"></span></p>
+        <p>Progress: <span id="progressValue"></span></p>
+        <p>Elapsed Time in Minutes: <span id="elapsed"></span></p>
+
+        <button onclick="downloadInput()">Download Input</button>
+        <button onclick="downloadResult()">Download Medium Result</button>
+    </div>
+
+    <div id="part3" style="display:none;">
+        <h2>Status: <span id="statusValue3"></span></h2>
+        <p>Input: <span id="inputValue3"></span></p>
+        <p>Progress: <span id="progressValue3"></span></p>
+        <p>Elapsed Time in Minutes: <span id="elapsed3"></span></p>
+
+        <button onclick="downloadInput()">Download Input</button>
+        <button onclick="downloadResult()">Download Result</button>
+        <button onclick="refresh()">Send new Request</button>
+    </div>
+
+    <script>
+        
+        timer = null;
+        
+        status = {
+            "status": "waiting for new request",
+            "input": "",
+            "progress": ""
+        };
+
+        function startTimer() {
+            if(!timer)
+                timer = setInterval(fetchData, 5000);
+        }   
+
+        function clearTimer() {
+            if(timer)
+                clearInterval(timer);
+        }
+
+        function downloadResult() {
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = '/code-book/download-result';
+            a.download = 'hello.txt';
+            document.body.appendChild(a);
+            a.click();
+        }
+
+        function downloadInput() {
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = '/code-book/download-input';
+            a.download = 'hello.txt';
+            document.body.appendChild(a);
+            a.click();
+        }
+
+        function refresh() {
+            document.getElementById('part1').style.display = 'none';
+            document.getElementById('part2').style.display = 'block';
+            document.getElementById('part3').style.display = 'none';
+            
+            clearTimer();
+        }
+        
+        function fetchData() {
+            // Replace 'https://api.example.com/status' with your API endpoint URL
+            fetch('/code-book/status')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log({ data })
+                    // Check the status from the JSON data
+                    if (data.status === "working" || data.status === 'working') {
+                        document.getElementById('part1').style.display = 'block';
+                        document.getElementById('part2').style.display = 'none';
+                        document.getElementById('part3').style.display = 'none';
+
+                        document.getElementById('statusValue').innerText = data.status;
+                        document.getElementById('inputValue').innerText = data.input;
+                        document.getElementById('progressValue').innerText = data.progress;
+                        document.getElementById('elapsed').innerText = data.elapsed;
+                        
+                        startTimer();
+                    } else if (data.status === "finished") {
+                        document.getElementById('part1').style.display = 'none';
+                        document.getElementById('part2').style.display = 'none';
+                        document.getElementById('part3').style.display = 'block';
+
+                        document.getElementById('statusValue3').innerText = data.status;
+                        document.getElementById('inputValue3').innerText = data.input;
+                        document.getElementById('progressValue3').innerText = data.progress;
+                        document.getElementById('elapsed3').innerText = data.elapsed;
+
+                        clearTimer();
+
+                    } else {
+                        this.refresh();
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+        }
+        
+        function submitForm() {
+            const form = document.querySelector('form');
+            const formData = new FormData(form);
+
+            fetch('/code-book', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle the response data here
+                    document.getElementById('part1').style.display = 'block';
+                    document.getElementById('part2').style.display = 'none';
+
+                    document.getElementById('statusValue').innerText = data.status;
+                    document.getElementById('inputValue').innerText = data.input;
+                    document.getElementById('progressValue').innerText = data.progress;
+                    document.getElementById('elapsed').innerText = data.elapsed;
+                    
+                    this.startTimer();
+
+                    document.getElementById("myForm").reset();
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+
+            // Prevent the form from submitting in the traditional way
+            return false;
+        }
+        
+        // Fetch data initially
+        fetchData();
+    </script>
+
 </body>
+
 </html>
