@@ -214,7 +214,7 @@ class WebServer:
                 url = 'https://www.semanticscholar.org/api/1/paper/'+ id + '/pdf-data'  # Replace with your actual API endpoint
                 response = requests.get(url, timeout=(5, 10))
                 python_object = response.json()
-                urls += (id + ": " + python_object['pdfUrl'] + "\r\n")
+                urls += (python_object['pdfUrl'] + "\r\n")
 
             except requests.exceptions.Timeout:
                 status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
@@ -229,11 +229,10 @@ class WebServer:
                 continue
             
             except requests.exceptions.RequestException as e:
-                urls += (id + ":" + "Network Error\r\n")
                 continue
             
             except:
-                urls += (id + ":" + "No Url\r\n")
+                continue
 
             with open('storage/paper/urls.txt', 'w+') as urls_file:
                 urls_file.truncate(0)
@@ -478,12 +477,11 @@ class WebServer:
                 match = re.search(r'<a href="(https://cloudflare.*?)">Cloudflare', files)
                 if match:
                     url = match.group(1)
-                    content += (str(index) + "." + hash_value + ":" + url + "\r\n")
+                    content += (url + "\r\n")
                 else:
-                    content += (str(index) + "." + hash_value + ":" + "Wrong hash\r\n")
+                    continue
+
             except requests.exceptions.Timeout:
-                content += (str(index) + "." + hash_value + ":" + "Timeout error\r\n")
-                
                 status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
                 status_data["status"] = "sleeping"
                 status_data["progress"] = "Sleeping for 1.5 mins because timeout error occurs for the " + str(index) + 'th file of ' + str(total_count)
@@ -494,7 +492,7 @@ class WebServer:
                 time.sleep(90)
 
             except requests.exceptions.RequestException as e:
-                content += (hash_value + ":" + "Network Error\r\n")
+                continue
             
             # Write result to file 
             with open('storage/code-book/result.txt', 'w+') as result_file:
