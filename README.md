@@ -16,3 +16,6 @@ This is container uses `python`, `poetry`, `aiohttp` and `docker` to create web 
 
 docker build -f Dockerfile -t sematic_scholar .
 docker run -d -p 80:80 -e HOST=0.0.0.0 -e PORT=80 sematic_scholar
+
+
+https://sendgb.com/Dez57T2BCKx  (sportswear)
