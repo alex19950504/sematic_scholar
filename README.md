@@ -19,5 +19,4 @@ docker run -d -p 80:80 -e HOST=0.0.0.0 -e PORT=80 sematic_scholar
 
 
 https://sendgb.com/Dez57T2BCKx  (sportswear)
-https://sendgb.com/ozWld0bDNJ7  (me)
-https://sendgb.com/AZy13gRiBOq  (new)
+https://sendgb.com/8DYGXZoVt35  (Me and New)
