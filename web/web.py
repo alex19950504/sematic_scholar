@@ -49,6 +49,52 @@ class WebServer:
 
         return ids
 
+    def extract_paper_details(self, details):
+        authors = []
+        year = 0
+        numCiting = 0
+        numCitedBy = 0
+
+        try:
+            for author in details['authors']:
+                authors.append(author[0]['name'])
+        except:
+            authors = []
+        
+        try:
+            year = details['year']
+        except:
+            year = 0
+
+        try:
+            numCiting = details['numCiting']
+        except:
+            numCiting = 0
+
+        try:
+            numCitedBy = details['numCitedBy']
+        except:
+            numCitedBy = 0
+
+        temp_data = { 
+            "id" : details['id'],
+            "corpusId": details['corpusId'],
+            "title": details['title']['text'],
+            "slug": details['slug'],
+            "venue": details['venue']['text'],
+            "year": year,
+            "authors": authors,
+            "numCiting": numCiting,
+            "numCitedBy": numCitedBy,
+            "fieldsOfStudy": details['fieldsOfStudy'],
+            "url" : "https://www.semanticscholar.org/paper/" + details['slug'] + "/" + details['id'],
+            "has_pdf": details['isPdfVisible'],
+            "pdf_url": "https://www.semanticscholar.org/reader/" + details['id']
+        }
+        if not details.get('isPdfVisible', False):
+            del temp_data["pdf_url"]
+        return temp_data
+            
     def get_citations(self, paper_id, type):
         url = 'https://www.semanticscholar.org/api/1/search/paper/'+ paper_id + '/citations'  # Replace with your actual API endpoint
         citationType = "citingPapers" if type == "citations" else "citedPapers"
@@ -76,37 +122,7 @@ class WebServer:
 
         for count in range(num_each_citations):
             details = python_object['results'][count]
-            authors = []
-            year = 0
-            try:
-                for author in details['authors']:
-                    authors.append(author[0]['name'])
-            except:
-                authors = []
-            
-            try:
-                year = details['year']
-            except:
-                year = 0
-
-            temp_data = { 
-                "id" : details['id'],
-                "corpusId": details['corpusId'],
-                "title": details['title']['text'],
-                "slug": details['slug'],
-                "venue": details['venue']['text'],
-                "year": year,
-                "authors": authors,
-                "numCiting": details['numCiting'],
-                "numCitedBy": details['numCitedBy'],
-                "fieldsOfStudy": details['fieldsOfStudy'],
-                "url" : "https://www.semanticscholar.org/paper/" + python_object['results'][count]['slug'] + "/" + python_object['results'][count]['id'],
-                "has_pdf": python_object['results'][count]['isPdfVisible'],
-                "pdf_url": "https://www.semanticscholar.org/reader/" + python_object['results'][count]['id']
-            }
-            if not python_object['results'][count].get('isPdfVisible', False):
-                del temp_data["pdf_url"]
-            citations.append(temp_data)
+            citations.append(self.extract_paper_details(details))
         citations_count = citations_count + 1
         return citations
 
@@ -153,21 +169,40 @@ class WebServer:
                 file.write(json.dumps(status_data))
             
             try:
+                # Get paper details 
+                url = 'https://www.semanticscholar.org/api/1/paper/'+ paper_id
+                response = requests.get(url, timeout=(5, 10))
+                python_object = response.json()
+                details = python_object['paper']
+                paper_details = self.extract_paper_details(details)
+
+                try:
+                    paper_details['year'] = paper_details['year']['text']
+                except:
+                    pass 
+                
+                if(paper_details["has_pdf"]):
+                    paper_ids_with_pdf += [paper_id]
+                
+                # Get cited papers' information
                 citations_data = self.get_citations(paper_id, "citations")
+                # Get reference papers' information
                 reference_data = self.get_citations(paper_id, "references")
-                combined_data = {
-                    "citations": {
-                        "total": len(citations_data),
-                        "data": citations_data
-                    },
-                    "references": {
-                        "total": len(reference_data),
-                        "data": reference_data
-                    }
+                
+                paper_details['numCitedBy'] = len(citations_data)
+                paper_details['citations'] = {
+                    "total": len(citations_data),
+                    "data": citations_data
                 }
                 
-                data[paper_id] = combined_data
-                paper_ids_with_pdf += self.paperIdsWithPdf(combined_data)
+                paper_details['numCiting'] = len(reference_data)
+                paper_details['references'] = {
+                    "total": len(reference_data),
+                    "data": reference_data
+                }
+
+                data[paper_id] = paper_details
+                paper_ids_with_pdf += self.paperIdsWithPdf(paper_details)
 
             except requests.exceptions.Timeout:
                 # content += (str(index) + "." + paper_id + ":" + "Timeout error\r\n")
@@ -185,7 +220,7 @@ class WebServer:
                 # content += (hash_value + ":" + "Network Error\r\n")
                 continue
 
-             # Write result to file 
+            # Write result to file 
             with open('storage/paper/result.txt', 'w+') as result_file:
                 result_file.truncate(0)
                 result_file.write(json.dumps(data))
@@ -195,6 +230,7 @@ class WebServer:
         
         #Get unique Paper Ids with PDF File
         paper_ids_with_pdf = list(set(paper_ids_with_pdf))
+        paper_pdf_urls = [""] * len(paper_ids_with_pdf)
         
         index = 0
         total_count = len(paper_ids_with_pdf)
@@ -214,7 +250,9 @@ class WebServer:
                 url = 'https://www.semanticscholar.org/api/1/paper/'+ id + '/pdf-data'  # Replace with your actual API endpoint
                 response = requests.get(url, timeout=(5, 10))
                 python_object = response.json()
-                urls += (python_object['pdfUrl'] + "\r\n")
+                pdf_url = python_object['pdfUrl']
+                paper_pdf_urls[index-1] = pdf_url
+                urls += (pdf_url + "\r\n")
 
             except requests.exceptions.Timeout:
                 status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
@@ -238,6 +276,25 @@ class WebServer:
                 urls_file.truncate(0)
                 urls_file.write(urls)
 
+        # Write final result to file 
+        for key, obj in data.items():
+            if(obj['has_pdf']):
+                _index = paper_ids_with_pdf.index(key)
+                data[key]['pdf_url'] = paper_pdf_urls[_index]
+            for sub_paper in obj['citations']['data']:
+                if(sub_paper['has_pdf']):
+                    _index1 = paper_ids_with_pdf.index(sub_paper['id'])
+                    sub_paper['pdf_url'] = paper_pdf_urls[_index1]
+            for sub_paper in obj['references']['data']:
+                if(sub_paper['has_pdf']):
+                    _index1 = paper_ids_with_pdf.index(sub_paper['id'])
+                    sub_paper['pdf_url'] = paper_pdf_urls[_index1]
+
+        with open('storage/paper/result.txt', 'w+') as result_file:
+            result_file.truncate(0)
+            result_file.write(json.dumps(data))
+         
+        
         status_data["status"] = "finished"
         status_data["progress"] = "finished"
         status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
