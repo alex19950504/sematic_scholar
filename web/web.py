@@ -27,6 +27,11 @@ class WebServer:
         self._web_app = web.Application()
         self._runner = web.AppRunner(self._web_app)
         self._response_json = None
+    
+    def log(self, content):
+        pass
+        # with open('storage/log.txt', 'a') as file:
+        #     file.write(content + "\r\n")
 
     async def get_json_response(self) -> Dict[Any, Any]:
        # read file response.json using aiofiles
@@ -171,22 +176,31 @@ class WebServer:
             try:
                 # Get paper details 
                 url = 'https://www.semanticscholar.org/api/1/paper/'+ paper_id
+                self.log('before sending paper detail request')
                 response = requests.get(url, timeout=(5, 10))
+                self.log('after sending paper detail request')
                 python_object = response.json()
-                details = python_object['paper']
-                paper_details = self.extract_paper_details(details)
-
-                try:
-                    paper_details['year'] = paper_details['year']['text']
-                except:
-                    pass 
-                
-                if(paper_details["has_pdf"]):
-                    paper_ids_with_pdf += [paper_id]
+                self.log('Parsed json response')
+                response_type = python_object['responseType']
+                self.log(response_type)
+                paper_details = {}
+                if(response_type == 'PAPER_DETAIL'):
+                    details = python_object['paper']
+                    self.log("Getting paper details for the " + str(index) + "th paper...")
+                    paper_details = self.extract_paper_details(details)
+                    try:
+                        paper_details['year'] = paper_details['year']['text']
+                    except:
+                        pass 
+                    
+                    if(paper_details["has_pdf"]):
+                        paper_ids_with_pdf += [paper_id]
                 
                 # Get cited papers' information
+                self.log("Getting citations data for the " + str(index) + "th paper...")
                 citations_data = self.get_citations(paper_id, "citations")
                 # Get reference papers' information
+                self.log("Getting references data for the " + str(index) + "th paper...")
                 reference_data = self.get_citations(paper_id, "references")
                 
                 paper_details['numCitedBy'] = len(citations_data)
@@ -206,7 +220,7 @@ class WebServer:
 
             except requests.exceptions.Timeout:
                 # content += (str(index) + "." + paper_id + ":" + "Timeout error\r\n")
-                
+                self.log('Timeout error occured')
                 status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
                 status_data["status"] = "sleeping"
                 status_data["progress"] = "Sleeping for 1.5 mins because timeout error occurs for the " + str(index) + 'th paper of ' + str(total_count)
@@ -218,7 +232,12 @@ class WebServer:
             
             except requests.exceptions.RequestException as e:
                 # content += (hash_value + ":" + "Network Error\r\n")
+                self.log("Request exception occured")
                 continue
+            
+            except:
+                self.log('Other exception occured')
+
 
             # Write result to file 
             with open('storage/paper/result.txt', 'w+') as result_file:

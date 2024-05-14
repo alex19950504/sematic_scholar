@@ -1,1 +1,1 @@
-{"status": "waiting for new request", "input": "", "progress": "", "step": "", "elapsed": 0}
+{"status": "finished", "input": "Total 2 hash IDs", "progress": "finished", "step": "Getting pdf urls", "elapsed": 2.6190494934717816}
