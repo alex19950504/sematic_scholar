@@ -34,3 +34,5 @@ https://sendgb.com/61E3mQIBAXu (new m, set, fi, ad)
 https://sendgb.com/i6Z8LkETOet (cftime)
 
 https://sendgb.com/DFx7SPcpU0f (greenhouse, pump)
+
+https://www.sendgb.com/upload/?utm_source=2S1HIVpNWnt (pillow-avif-..... python package)
