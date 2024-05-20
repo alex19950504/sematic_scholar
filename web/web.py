@@ -176,13 +176,9 @@ class WebServer:
             try:
                 # Get paper details 
                 url = 'https://www.semanticscholar.org/api/1/paper/'+ paper_id
-                self.log('before sending paper detail request')
                 response = requests.get(url, timeout=(5, 10))
-                self.log('after sending paper detail request')
                 python_object = response.json()
-                self.log('Parsed json response')
                 response_type = python_object['responseType']
-                self.log(response_type)
                 paper_details = {}
                 if(response_type == 'PAPER_DETAIL'):
                     details = python_object['paper']
@@ -275,7 +271,7 @@ class WebServer:
                     pdf_url = python_object['pdfUrl']
                 except:
                     continue
-                    
+
                 paper_pdf_urls[index-1] = pdf_url
                 urls += (pdf_url + "\r\n")
 
@@ -455,6 +451,18 @@ class WebServer:
         except Exception as e:
             return web.Response(text=f'Error while reading the file: {e}', status=500)
 
+    async def clear_log_file(self, request: web.Request):
+        # Path to the file to be downloaded
+        file_path = 'storage/log.txt'
+
+        with open(file_path, 'w+') as input_file:
+            input_file.truncate(0)
+            input_file.write('')
+        
+        return web.json_response({
+            "status": "cleared logs"
+        })
+        
     async def download_paper_result_file(self, request: web.Request):
         # Path to the file to be downloaded
         file_path = 'storage/paper/result.txt'
@@ -659,6 +667,7 @@ class WebServer:
         self._web_app.router.add_route("GET", "/code-book/download-input", self.download_book_input_file)
 
         self._web_app.router.add_route("GET", "/download-log", self.download_log_file)
+        self._web_app.router.add_route("POST", "/clear-log", self.clear_log_file)
 
         self._web_app.router.add_route("HEAD", "/{tail:.*}", self._get_json)
         

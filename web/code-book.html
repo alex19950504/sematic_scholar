@@ -11,6 +11,7 @@
 
     <h1>Get book urls by hash Ids</h1>
     <button onclick="downloadLog()">Download Log</button>
+    <button onclick="clearLog()">Clear Log</button>
     <div id="part2" style="display:none;">
         <form id="myForm" onsubmit="return submitForm();">
             <label for="hash_id">Input Hash Value to Download</label><br>
@@ -93,6 +94,28 @@
             document.getElementById('part3').style.display = 'none';
             
             clearTimer();
+        }
+
+        function clearLog() {
+            fetch('/clear-log', {
+                method: 'POST',
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle the response data here
+                    console.log('Cleared server log')
+                })
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                });
+
+            // Prevent the form from submitting in the traditional way
+            return false;
         }
         
         function fetchData() {
