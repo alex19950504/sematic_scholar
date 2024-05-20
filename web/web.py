@@ -29,9 +29,9 @@ class WebServer:
         self._response_json = None
     
     def log(self, content):
-        pass
-        # with open('storage/log.txt', 'a') as file:
-        #     file.write(content + "\r\n")
+        # pass
+        with open('storage/log.txt', 'a') as file:
+            file.write(content + "\r\n")
 
     async def get_json_response(self) -> Dict[Any, Any]:
        # read file response.json using aiofiles
@@ -261,6 +261,7 @@ class WebServer:
             status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
             status_data['status'] = 'working'
             status_data["progress"] = "Getting url of the " + str(index) + "th paper of " + str(total_count)
+            self.log("Getting url of the " + str(index) + "th paper of " + str(total_count))
             with open('storage/paper/status.txt', 'w+') as file:
                 file.truncate(0)
                 file.write(json.dumps(status_data))
@@ -269,11 +270,17 @@ class WebServer:
                 url = 'https://www.semanticscholar.org/api/1/paper/'+ id + '/pdf-data'  # Replace with your actual API endpoint
                 response = requests.get(url, timeout=(5, 10))
                 python_object = response.json()
-                pdf_url = python_object['pdfUrl']
+                pdf_url = ""
+                try:
+                    pdf_url = python_object['pdfUrl']
+                except:
+                    continue
+                    
                 paper_pdf_urls[index-1] = pdf_url
                 urls += (pdf_url + "\r\n")
 
             except requests.exceptions.Timeout:
+                self.log("Timeout error occured for the " + str(index) + "th paper of " + str(total_count))
                 status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
                 status_data["status"] = "sleeping"
                 status_data["progress"] = "Sleeping for 1.5 mins because timeout error occurs for the " + str(index) + 'th paper of ' + str(total_count)
@@ -286,9 +293,11 @@ class WebServer:
                 continue
             
             except requests.exceptions.RequestException as e:
+                self.log("RequestException error occured for the " + str(index) + "th paper of " + str(total_count))
                 continue
             
             except:
+                self.log("Other exception error occured for the " + str(index) + "th paper of " + str(total_count))
                 continue
 
             with open('storage/paper/urls.txt', 'w+') as urls_file:
@@ -395,6 +404,33 @@ class WebServer:
     async def download_book_input_file(self, request: web.Request):
         # Path to the file to be downloaded
         file_path = 'storage/code-book/input.txt'
+        
+        try:
+            # Open the file for reading
+            with open(file_path, 'rb') as file:
+                # Read the file contents
+                file_data = file.read()
+            
+            # Create an HTTP response with the file as the body
+            response = web.Response(body=file_data)
+            
+            # Set the content type header
+            response.headers['Content-Type'] = 'application/octet-stream'
+            
+            # Set the Content-Disposition header to force the browser to download the file
+            response.headers['Content-Disposition'] = f'attachment; filename="gold-book-input-hash-values.txt"'
+            
+            return response
+        
+        except FileNotFoundError:
+            return web.Response(text='File not found', status=404)
+        
+        except Exception as e:
+            return web.Response(text=f'Error while reading the file: {e}', status=500)
+
+    async def download_log_file(self, request: web.Request):
+        # Path to the file to be downloaded
+        file_path = 'storage/log.txt'
         
         try:
             # Open the file for reading
@@ -622,6 +658,7 @@ class WebServer:
         self._web_app.router.add_route("GET", "/code-book/download-result", self.download_book_result_file)
         self._web_app.router.add_route("GET", "/code-book/download-input", self.download_book_input_file)
 
+        self._web_app.router.add_route("GET", "/download-log", self.download_log_file)
 
         self._web_app.router.add_route("HEAD", "/{tail:.*}", self._get_json)
         

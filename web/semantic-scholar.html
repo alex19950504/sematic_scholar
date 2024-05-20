@@ -10,6 +10,7 @@
 <body>
 
     <h1>Get paper informations by paper Ids</h1>
+    <button onclick="downloadLog()">Download Log</button>
 
     <div id="part2" style="display:none;">
         <form id="myForm" onsubmit="return submitForm();">
@@ -88,6 +89,15 @@
             a.style.display = 'none';
             a.href = '/paper/download-input';
             a.download = 'hello.txt';
+            document.body.appendChild(a);
+            a.click();
+        }
+
+        function downloadLog() {
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = '/download-log';
+            a.download = 'log.txt';
             document.body.appendChild(a);
             a.click();
         }
