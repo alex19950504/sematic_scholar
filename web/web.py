@@ -257,21 +257,23 @@ class WebServer:
             status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
             status_data['status'] = 'working'
             status_data["progress"] = "Getting url of the " + str(index) + "th paper of " + str(total_count)
-            self.log("Getting url of the " + str(index) + "th paper of " + str(total_count))
+            self.log("Getting url of the " + str(index) + "th paper of " + str(total_count) + " : paperId = " + str(id))
             with open('storage/paper/status.txt', 'w+') as file:
                 file.truncate(0)
                 file.write(json.dumps(status_data))
 
             try:
                 url = 'https://www.semanticscholar.org/api/1/paper/'+ id + '/pdf-data'  # Replace with your actual API endpoint
+                self.log("fetching paper pdf information: url = " + url)
                 response = requests.get(url, timeout=(5, 10))
+                self.log("fetched paper pdf information: url = " + url)
                 python_object = response.json()
                 pdf_url = ""
                 try:
                     pdf_url = python_object['pdfUrl']
                 except:
                     continue
-
+                
                 paper_pdf_urls[index-1] = pdf_url
                 urls += (pdf_url + "\r\n")
 
