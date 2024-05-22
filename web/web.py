@@ -254,6 +254,7 @@ class WebServer:
 
         for id in paper_ids_with_pdf:
             index += 1
+            self.log("going to start processing of the " + str(index) + " th file of " + str(total_count))
             status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
             status_data['status'] = 'working'
             status_data["progress"] = "Getting url of the " + str(index) + "th paper of " + str(total_count)
@@ -302,6 +303,8 @@ class WebServer:
             with open('storage/paper/urls.txt', 'w+') as urls_file:
                 urls_file.truncate(0)
                 urls_file.write(urls)
+
+            self.log("finished processing of the " + str(index) + " th file of " + str(total_count))
 
         # Write final result to file 
         for key, obj in data.items():
