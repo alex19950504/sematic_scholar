@@ -273,8 +273,9 @@ class WebServer:
                     pdf_url = python_object['pdfUrl']
                 except:
                     continue
-                
+                self.log("before pdf_url = " + pdf_url)
                 paper_pdf_urls[index-1] = pdf_url
+                self.log("after pdf_url = " + pdf_url)
                 urls += (pdf_url + "\r\n")
 
             except requests.exceptions.Timeout:
