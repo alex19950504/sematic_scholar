@@ -1,1 +1,1 @@
-{"status": "finished", "input": "Total 2 hash IDs", "progress": "finished", "step": "Getting pdf urls", "elapsed": 2.6190494934717816}
+{"status": "working", "input": "Total 25 hash IDs", "progress": "Getting url of the 38th paper of 1141", "step": "Getting pdf urls", "elapsed": 3.087551017602285}

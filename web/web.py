@@ -252,73 +252,83 @@ class WebServer:
         
         urls = ""    
 
-        for id in paper_ids_with_pdf:
-            index += 1
-            self.log("going to start processing of the " + str(index) + " th file of " + str(total_count))
-            status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
-            status_data['status'] = 'working'
-            status_data["progress"] = "Getting url of the " + str(index) + "th paper of " + str(total_count)
-            self.log("Getting url of the " + str(index) + "th paper of " + str(total_count) + " : paperId = " + str(id))
-            with open('storage/paper/status.txt', 'w+') as file:
-                file.truncate(0)
-                file.write(json.dumps(status_data))
-
-            try:
-                url = 'https://www.semanticscholar.org/api/1/paper/'+ id + '/pdf-data'  # Replace with your actual API endpoint
-                self.log("fetching paper pdf information: url = " + url)
-                response = requests.get(url, timeout=(5, 10))
-                self.log("fetched paper pdf information: url = " + url)
-                python_object = response.json()
-                pdf_url = ""
-                try:
-                    pdf_url = python_object['pdfUrl']
-                except:
-                    continue
-                self.log("before pdf_url = " + pdf_url)
-                paper_pdf_urls[index-1] = pdf_url
-                self.log("after pdf_url = " + pdf_url)
-                urls += (pdf_url + "\r\n")
-
-            except requests.exceptions.Timeout:
-                self.log("Timeout error occured for the " + str(index) + "th paper of " + str(total_count))
+        try:
+            for id in paper_ids_with_pdf:
+                index += 1
+                self.log(str(id) + ", index = " + str(index))
+                self.log("going to start processing of the " + str(index) + " th file of " + str(total_count))
                 status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
-                status_data["status"] = "sleeping"
-                status_data["progress"] = "Sleeping for 1.5 mins because timeout error occurs for the " + str(index) + 'th paper of ' + str(total_count)
+                status_data['status'] = 'working'
+                status_data["progress"] = "Getting url of the " + str(index) + "th paper of " + str(total_count)
+                self.log("Getting url of the " + str(index) + "th paper of " + str(total_count) + " : paperId = " + str(id))
                 with open('storage/paper/status.txt', 'w+') as file:
                     file.truncate(0)
                     file.write(json.dumps(status_data))
 
-                time.sleep(90)
-                index -= 1
-                continue
-            
-            except requests.exceptions.RequestException as e:
-                self.log("RequestException error occured for the " + str(index) + "th paper of " + str(total_count))
-                continue
-            
-            except:
-                self.log("Other exception error occured for the " + str(index) + "th paper of " + str(total_count))
-                continue
+                try:
+                    url = 'https://www.semanticscholar.org/api/1/paper/'+ id + '/pdf-data'  # Replace with your actual API endpoint
+                    self.log("fetching paper pdf information: url = " + url)
+                    response = requests.get(url, timeout=(5, 10))
+                    self.log("fetched paper pdf information: url = " + url)
+                    python_object = response.json()
+                    pdf_url = ""
+                    try:
+                        pdf_url = python_object['pdfUrl']
+                    except:
+                        continue
+                    self.log("before pdf_url = " + pdf_url)
+                    paper_pdf_urls[index-1] = pdf_url
+                    self.log("after pdf_url = " + pdf_url)
+                    urls += (pdf_url + "\r\n")
 
-            with open('storage/paper/urls.txt', 'w+') as urls_file:
-                urls_file.truncate(0)
-                urls_file.write(urls)
+                except requests.exceptions.Timeout:
+                    self.log("Timeout error occured for the " + str(index) + "th paper of " + str(total_count))
+                    status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
+                    status_data["status"] = "sleeping"
+                    status_data["progress"] = "Sleeping for 1.5 mins because timeout error occurs for the " + str(index) + 'th paper of ' + str(total_count)
+                    with open('storage/paper/status.txt', 'w+') as file:
+                        file.truncate(0)
+                        file.write(json.dumps(status_data))
 
-            self.log("finished processing of the " + str(index) + " th file of " + str(total_count))
+                    time.sleep(90)
+                    index -= 1
+                    continue
+                
+                except requests.exceptions.RequestException as e:
+                    self.log("RequestException error occured for the " + str(index) + "th paper of " + str(total_count))
+                    urls += ""
+                    continue
+                
+                except:
+                    self.log("Other exception error occured for the " + str(index) + "th paper of " + str(total_count))
+                    urls += ""
+                    continue
 
+                with open('storage/paper/urls.txt', 'w+') as urls_file:
+                    urls_file.truncate(0)
+                    urls_file.write(urls)
+
+                self.log("finished processing of the " + str(index) + " th file of " + str(total_count))
+        except:
+            self.log("Unexpected error occured while getting pdf urls")
+        
+        self.log('Going to write urls')
         # Write final result to file 
         for key, obj in data.items():
             if(obj['has_pdf']):
                 _index = paper_ids_with_pdf.index(key)
-                data[key]['pdf_url'] = paper_pdf_urls[_index]
+                if(_index != -1):
+                    data[key]['pdf_url'] = paper_pdf_urls[_index]
             for sub_paper in obj['citations']['data']:
                 if(sub_paper['has_pdf']):
                     _index1 = paper_ids_with_pdf.index(sub_paper['id'])
-                    sub_paper['pdf_url'] = paper_pdf_urls[_index1]
+                    if(_index1 != -1):
+                        sub_paper['pdf_url'] = paper_pdf_urls[_index1]
             for sub_paper in obj['references']['data']:
                 if(sub_paper['has_pdf']):
                     _index1 = paper_ids_with_pdf.index(sub_paper['id'])
-                    sub_paper['pdf_url'] = paper_pdf_urls[_index1]
+                    if(_index1 != -1):
+                        sub_paper['pdf_url'] = paper_pdf_urls[_index1]
 
         with open('storage/paper/result.txt', 'w+') as result_file:
             result_file.truncate(0)
