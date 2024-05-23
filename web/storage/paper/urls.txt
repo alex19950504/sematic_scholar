@@ -35,3 +35,9 @@ https://browse.arxiv.org/pdf/1602.07261v2.pdf
 https://browse.arxiv.org/pdf/2403.04743v1.pdf
 https://browse.arxiv.org/pdf/2305.19365v1.pdf
 https://browse.arxiv.org/pdf/2206.12126v3.pdf
+https://browse.arxiv.org/pdf/2008.08903v4.pdf
+https://browse.arxiv.org/pdf/2007.11836v1.pdf
+https://browse.arxiv.org/pdf/2110.07577v3.pdf
+https://browse.arxiv.org/pdf/1511.08458v2.pdf
+https://browse.arxiv.org/pdf/2205.00305v4.pdf
+https://browse.arxiv.org/pdf/2312.01163v2.pdf

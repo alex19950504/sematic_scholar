@@ -9546,3 +9546,51 @@ finished processing of the 37 th file of 1141
 going to start processing of the 38 th file of 1141
 Getting url of the 38th paper of 1141 : paperId = 3ee3794b25304f21d364b7389d91a37c989a35d5
 fetching paper pdf information: url = https://www.semanticscholar.org/api/1/paper/3ee3794b25304f21d364b7389d91a37c989a35d5/pdf-data
+fetched paper pdf information: url = https://www.semanticscholar.org/api/1/paper/3ee3794b25304f21d364b7389d91a37c989a35d5/pdf-data
+before pdf_url = https://browse.arxiv.org/pdf/2008.08903v4.pdf
+after pdf_url = https://browse.arxiv.org/pdf/2008.08903v4.pdf
+finished processing of the 38 th file of 1141
+1c9e0bd419dfedf44e4ba80a4eb162662528e36f, index = 39
+going to start processing of the 39 th file of 1141
+Getting url of the 39th paper of 1141 : paperId = 1c9e0bd419dfedf44e4ba80a4eb162662528e36f
+fetching paper pdf information: url = https://www.semanticscholar.org/api/1/paper/1c9e0bd419dfedf44e4ba80a4eb162662528e36f/pdf-data
+fetched paper pdf information: url = https://www.semanticscholar.org/api/1/paper/1c9e0bd419dfedf44e4ba80a4eb162662528e36f/pdf-data
+before pdf_url = https://browse.arxiv.org/pdf/2007.11836v1.pdf
+after pdf_url = https://browse.arxiv.org/pdf/2007.11836v1.pdf
+finished processing of the 39 th file of 1141
+ad471be93216ddbf8544721d50ee5aed14f07cae, index = 40
+going to start processing of the 40 th file of 1141
+Getting url of the 40th paper of 1141 : paperId = ad471be93216ddbf8544721d50ee5aed14f07cae
+fetching paper pdf information: url = https://www.semanticscholar.org/api/1/paper/ad471be93216ddbf8544721d50ee5aed14f07cae/pdf-data
+fetched paper pdf information: url = https://www.semanticscholar.org/api/1/paper/ad471be93216ddbf8544721d50ee5aed14f07cae/pdf-data
+before pdf_url = https://browse.arxiv.org/pdf/2110.07577v3.pdf
+after pdf_url = https://browse.arxiv.org/pdf/2110.07577v3.pdf
+finished processing of the 40 th file of 1141
+f46714d200d69eb9cb5cce176297b89a3f5e3a2c, index = 41
+going to start processing of the 41 th file of 1141
+Getting url of the 41th paper of 1141 : paperId = f46714d200d69eb9cb5cce176297b89a3f5e3a2c
+fetching paper pdf information: url = https://www.semanticscholar.org/api/1/paper/f46714d200d69eb9cb5cce176297b89a3f5e3a2c/pdf-data
+fetched paper pdf information: url = https://www.semanticscholar.org/api/1/paper/f46714d200d69eb9cb5cce176297b89a3f5e3a2c/pdf-data
+before pdf_url = https://browse.arxiv.org/pdf/1511.08458v2.pdf
+after pdf_url = https://browse.arxiv.org/pdf/1511.08458v2.pdf
+finished processing of the 41 th file of 1141
+5ae998e96e089b958dd2a384da6f8e7a7ee66b55, index = 42
+going to start processing of the 42 th file of 1141
+Getting url of the 42th paper of 1141 : paperId = 5ae998e96e089b958dd2a384da6f8e7a7ee66b55
+fetching paper pdf information: url = https://www.semanticscholar.org/api/1/paper/5ae998e96e089b958dd2a384da6f8e7a7ee66b55/pdf-data
+fetched paper pdf information: url = https://www.semanticscholar.org/api/1/paper/5ae998e96e089b958dd2a384da6f8e7a7ee66b55/pdf-data
+before pdf_url = https://browse.arxiv.org/pdf/2205.00305v4.pdf
+after pdf_url = https://browse.arxiv.org/pdf/2205.00305v4.pdf
+finished processing of the 42 th file of 1141
+49b43c8353d077a4146756adcc54fe2e99aaceb9, index = 43
+going to start processing of the 43 th file of 1141
+Getting url of the 43th paper of 1141 : paperId = 49b43c8353d077a4146756adcc54fe2e99aaceb9
+fetching paper pdf information: url = https://www.semanticscholar.org/api/1/paper/49b43c8353d077a4146756adcc54fe2e99aaceb9/pdf-data
+fetched paper pdf information: url = https://www.semanticscholar.org/api/1/paper/49b43c8353d077a4146756adcc54fe2e99aaceb9/pdf-data
+before pdf_url = https://browse.arxiv.org/pdf/2312.01163v2.pdf
+after pdf_url = https://browse.arxiv.org/pdf/2312.01163v2.pdf
+finished processing of the 43 th file of 1141
+1aaf7dec80b623545adf90ed91044a6f6585c4c5, index = 44
+going to start processing of the 44 th file of 1141
+Getting url of the 44th paper of 1141 : paperId = 1aaf7dec80b623545adf90ed91044a6f6585c4c5
+fetching paper pdf information: url = https://www.semanticscholar.org/api/1/paper/1aaf7dec80b623545adf90ed91044a6f6585c4c5/pdf-data
