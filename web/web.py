@@ -291,17 +291,16 @@ class WebServer:
                         file.write(json.dumps(status_data))
 
                     time.sleep(90)
-                    index -= 1
                     continue
                 
                 except requests.exceptions.RequestException as e:
                     self.log("RequestException error occured for the " + str(index) + "th paper of " + str(total_count))
-                    urls += ""
+                    time.sleep(90)
                     continue
                 
                 except:
                     self.log("Other exception error occured for the " + str(index) + "th paper of " + str(total_count))
-                    urls += ""
+                    time.sleep(90)
                     continue
 
                 with open('storage/paper/urls.txt', 'w+') as urls_file:
@@ -314,11 +313,13 @@ class WebServer:
         
         self.log('Going to write urls')
         # Write final result to file 
-        for key, obj in data.items():
+        for key in data.keys():
+            self.log("key = " + key + "")
+            obj = data[key]
             if(obj['has_pdf']):
                 _index = paper_ids_with_pdf.index(key)
                 if(_index != -1):
-                    data[key]['pdf_url'] = paper_pdf_urls[_index]
+                    obj['pdf_url'] = paper_pdf_urls[_index]
             for sub_paper in obj['citations']['data']:
                 if(sub_paper['has_pdf']):
                     _index1 = paper_ids_with_pdf.index(sub_paper['id'])
@@ -329,12 +330,13 @@ class WebServer:
                     _index1 = paper_ids_with_pdf.index(sub_paper['id'])
                     if(_index1 != -1):
                         sub_paper['pdf_url'] = paper_pdf_urls[_index1]
-
+        self.log('pacthed data')
         with open('storage/paper/result.txt', 'w+') as result_file:
             result_file.truncate(0)
             result_file.write(json.dumps(data))
          
-        
+        self.log('wrote final content to file')
+
         status_data["status"] = "finished"
         status_data["progress"] = "finished"
         status_data['elapsed'] = self.getTimeDeltaInMinutes(start_time, time.time())
