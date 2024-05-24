@@ -316,20 +316,24 @@ class WebServer:
         for key in data.keys():
             self.log("key = " + key + "")
             obj = data[key]
-            if(obj['has_pdf']):
-                _index = paper_ids_with_pdf.index(key)
-                if(_index != -1):
-                    obj['pdf_url'] = paper_pdf_urls[_index]
-            for sub_paper in obj['citations']['data']:
-                if(sub_paper['has_pdf']):
-                    _index1 = paper_ids_with_pdf.index(sub_paper['id'])
-                    if(_index1 != -1):
-                        sub_paper['pdf_url'] = paper_pdf_urls[_index1]
-            for sub_paper in obj['references']['data']:
-                if(sub_paper['has_pdf']):
-                    _index1 = paper_ids_with_pdf.index(sub_paper['id'])
-                    if(_index1 != -1):
-                        sub_paper['pdf_url'] = paper_pdf_urls[_index1]
+            try:
+                if(obj['has_pdf']):
+                    _index = paper_ids_with_pdf.index(key)
+                    if(_index != -1):
+                        obj['pdf_url'] = paper_pdf_urls[_index]
+                for sub_paper in obj['citations']['data']:
+                    if(sub_paper['has_pdf']):
+                        _index1 = paper_ids_with_pdf.index(sub_paper['id'])
+                        if(_index1 != -1):
+                            sub_paper['pdf_url'] = paper_pdf_urls[_index1]
+                for sub_paper in obj['references']['data']:
+                    if(sub_paper['has_pdf']):
+                        _index1 = paper_ids_with_pdf.index(sub_paper['id'])
+                        if(_index1 != -1):
+                            sub_paper['pdf_url'] = paper_pdf_urls[_index1]
+            except:
+                pass
+                
         self.log('pacthed data')
         with open('storage/paper/result.txt', 'w+') as result_file:
             result_file.truncate(0)
